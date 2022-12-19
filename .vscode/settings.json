@@ -1,0 +1,53 @@
+{
+    "editor.renderWhitespace": "all",
+    "editor.rulers": [
+        88,
+        120
+    ],
+    "files.trimTrailingWhitespace": true,
+    "files.trimFinalNewlines": true,
+    "files.insertFinalNewline": true,
+    "[python]": {
+        "editor.tabSize": 4,
+        "editor.insertSpaces": true,
+        "editor.formatOnSave": true
+    },
+    "python.defaultInterpreterPath": "./venv/bin/python",
+    "python.formatting.provider": "black",
+    "python.linting.enabled": true,
+    "python.linting.flake8Path": "flake8",
+    "python.linting.flake8Enabled": true,
+    "python.linting.flake8CategorySeverity.F": "Error",
+    "python.linting.flake8CategorySeverity.E": "Error",
+    "python.linting.flake8Args": [
+        "--max-line-length=120"
+    ],
+    "python.linting.mypyEnabled": true,
+    "python.linting.mypyPath": "mypy",
+    "python.linting.pylintEnabled": true,
+    "python.linting.banditEnabled": true,
+    "python.linting.banditArgs": [
+        "-x",
+        "./tests",
+        "-r",
+    ],
+    "python.linting.pylintArgs": [
+        "--disable=C0301"
+    ],
+    "python.linting.pycodestyleEnabled": true,
+    "python.linting.pycodestyleArgs": [
+        "--ignore E501"
+    ],
+    "python.linting.pydocstylePath": "pydocstyle",
+    "python.linting.pydocstyleEnabled": false,
+    "python.linting.pydocstyleArgs": [
+        "--convention=numpy"
+    ],
+    "python.languageServer": "Pylance",
+    "python.testing.pytestArgs": [
+        "tests"
+    ],
+    "python.testing.unittestEnabled": false,
+    "python.testing.pytestEnabled": true,
+    "python.terminal.activateEnvironment": true,
+}
