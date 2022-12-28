@@ -1,6 +1,6 @@
 """Constants and object templates for the Google Sheets API."""
 
-CONDITIONAL_FORMATTING_RULE = {
+CONDITIONAL_FORMATTING_RULE: dict = {
     "addConditionalFormatRule": {
         "rule": {
             "ranges": [
