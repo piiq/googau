@@ -4,18 +4,18 @@
 
 1. Install from pypi
 
-```bash
-pip install -U googau
-```
+   ```bash
+   pip install -U googau
+   ```
 
 1. Install for development
 
-```bash
-virtualenv -p python3 venv
-source venv/bin/activate
-pip install poetry
-poetry install
-```
+   ```bash
+   virtualenv -p python3 venv
+   source venv/bin/activate
+   pip install poetry
+   poetry install
+   ```
 
 ### References and links
 
