@@ -1,0 +1,32 @@
+name: CodeQA
+env:
+  PIP_DEFAULT_TIMEOUT: 100
+on: [pull_request, push]
+jobs:
+  linting:
+    name: Linting
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
+
+      - name: Setup Python 3.9
+        uses: actions/setup-python@v2
+        with:
+          python-version: "3.9"
+          architecture: x64
+
+      - uses: actions/cache@v2
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-linting
+          restore-keys: ${{ runner.os }}-linting
+
+      - run: pip install bandit black codespell flake8 pycodestyle pydocstyle
+      - run: bandit -r googau || true
+      - run: black --check googau
+      - run: codespell googau
+      - run: flake8 googau --count --max-line-length=120 --show-source --statistics
+      - run: pycodestyle googau --ignore=E501
+      - run: pydocstyle googau
