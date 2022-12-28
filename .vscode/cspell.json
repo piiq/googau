@@ -2,6 +2,9 @@
     "words": [
         "creds",
         "Googau",
-        "googleapiclient"
+        "googleapiclient",
+        "pypi",
+        "venv",
+        "virtualenv"
     ]
 }

@@ -95,7 +95,6 @@ class WorkSheetObject:
         dict
             A dictionary object containing the conditional formatting style
         """
-
         for i in cf_style_dict:
             body: dict[str, Any] = {"requests": []}
             cfr["addConditionalFormatRule"]["rule"]["ranges"][0][
