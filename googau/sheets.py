@@ -1,7 +1,7 @@
 """Spreadsheet utilities."""
 from typing import List, Optional, Any, Union
 from .sessions import SheetsSession
-from .constants.sheets_constants import CONDITIONAL_FORMATTING_RULE as cfr
+from .constants.sheets_constants import CONDITIONAL_FORMATTING_RULE
 
 
 class WorkSheetObject:
@@ -95,6 +95,7 @@ class WorkSheetObject:
         dict
             A dictionary object containing the conditional formatting style
         """
+        cfr = CONDITIONAL_FORMATTING_RULE
         for i in cf_style_dict:
             body: dict[str, Any] = {"requests": []}
             cfr["addConditionalFormatRule"]["rule"]["ranges"][0][
@@ -160,12 +161,12 @@ class SpreadSheetObject(object):
     def list_worksheets(self):
         """List available worksheets in the spreadsheet document.
 
-        _extended_summary_
+        TODO: Implement this function
 
         Returns
         -------
-        _type_
-            _description_
+        dict
+            A dictionary object containing the available worksheets
         """
 
     def get_cell_range(self, cell_range: str) -> List[Union[str, int, float]]:
