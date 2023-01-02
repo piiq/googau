@@ -39,42 +39,47 @@ class GoogleSession:
         with open(token_path, "rb") as token:
             return pickle.load(token)  # nosec
 
-    def authenticate(self, credentials_json: str = "credentials.json") -> str:
+    def authenticate(
+        self, credentials: Optional[str] = None, token: Optional[str] = None
+    ) -> Credentials:
         """Authenticate user and return credentials.
 
         Parameters
         ----------
-            credentials_json (str, optional): Path to credentials.json file.
-            Defaults to "credentials.json".
+            credentials (str, optional): Path to credentials.json file.
+            token (str, optional): Path to token.pickle file.
 
         Returns
         -------
             str: Credentials.
         """
         creds = None
-        if os.path.exists("token.pickle"):
-            self._load_creds("token.pickle")
+        if token is not None and os.path.exists(token):
+            creds = self._load_creds(token)
+        elif token is None and os.path.exists(
+            os.path.join(os.getcwd(), "token.pickle")
+        ):
+            creds = self._load_creds(os.path.join(os.getcwd(), "token.pickle"))
+
         # If there are no (valid) credentials available, let the user log in.
         if not creds or not creds.valid:
             if creds and creds.expired and creds.refresh_token:
                 creds.refresh(Request())
             else:
-                flow = InstalledAppFlow.from_client_secrets_file(
-                    credentials_json, SCOPES
-                )
+                flow = InstalledAppFlow.from_client_secrets_file(credentials, SCOPES)
                 creds = flow.run_local_server(port=0)
             # Save the credentials for the next run
-            with open("token.pickle", "wb") as token:
-                pickle.dump(creds, token)
+            with open(os.path.join(os.getcwd(), "token.pickle"), "wb") as token_file:
+                pickle.dump(creds, token_file)
         return creds
 
 
 class SheetsSession(GoogleSession):
     """GoogleSession for Sheets API."""
 
-    def __init__(self, credentials_json="credentials.json"):
+    def __init__(self, **kwargs):
         """Connect to Google Workspace Sheets API."""
-        self.creds = self.authenticate(credentials_json=credentials_json)
+        self.creds = self.authenticate(**kwargs)
         # pylint: disable=no-member
         self.session = build("sheets", "v4", credentials=self.creds).spreadsheets()
 
@@ -82,9 +87,9 @@ class SheetsSession(GoogleSession):
 class DocSession(GoogleSession):
     """GoogleSession for Docs API."""
 
-    def __init__(self, credentials_json="credentials.json"):
+    def __init__(self, **kwargs):
         """Connect to Google Workspace Docs API."""
-        self.creds = self.authenticate(credentials_json=credentials_json)
+        self.creds = self.authenticate(**kwargs)
         # pylint: disable=no-member
         self.session = build("docs", "v1", credentials=self.creds).documents()
 
@@ -92,9 +97,9 @@ class DocSession(GoogleSession):
 class DriveSession(GoogleSession):
     """GoogleSession for Drive API to manage shared drives."""
 
-    def __init__(self, credentials_json="credentials.json"):
+    def __init__(self, **kwargs):
         """Connect to Google Workspace Drive API."""
-        self.creds = self.authenticate(credentials_json=credentials_json)
+        self.creds = self.authenticate(**kwargs)
         # pylint: disable=no-member
         self.session = build("drive", "v3", credentials=self.creds).drives()
 
@@ -107,9 +112,9 @@ class DriveSession(GoogleSession):
 class FilesSession(GoogleSession):
     """GoogleSession for Drive API to manage files."""
 
-    def __init__(self, credentials_json="credentials.json"):
+    def __init__(self, **kwargs):
         """Connect to Google Workspace Drive API."""
-        self.creds = self.authenticate(credentials_json=credentials_json)
+        self.creds = self.authenticate(**kwargs)
         # pylint: disable=no-member
         self.session = build("drive", "v3", credentials=self.creds).files()
 
@@ -117,8 +122,8 @@ class FilesSession(GoogleSession):
 class CalendarSession(GoogleSession):
     """GoogleSession for Calendar API."""
 
-    def __init__(self, credentials_json="credentials.json"):
+    def __init__(self, **kwargs):
         """Connect to Google Workspace Calendar API."""
-        self.creds = self.authenticate(credentials_json)
+        self.creds = self.authenticate(**kwargs)
         # pylint: disable=no-member
         self.session = build("calendar", "v3", credentials=self.creds).events()
