@@ -1,5 +1,5 @@
 """Spreadsheet utilities."""
-from typing import List, Optional, Any
+from typing import List, Optional, Any, Union
 from .sessions import SheetsSession
 from .constants.sheets_constants import CONDITIONAL_FORMATTING_RULE as cfr
 
@@ -168,7 +168,7 @@ class SpreadSheetObject(object):
             _description_
         """
 
-    def get_cell_range(self, cell_range: str) -> List[str | int | float]:
+    def get_cell_range(self, cell_range: str) -> List[Union[str, int, float]]:
         """Get a range of cells from the spreadsheet.
 
         Parameters
