@@ -50,4 +50,12 @@
     "python.testing.unittestEnabled": false,
     "python.testing.pytestEnabled": true,
     "python.terminal.activateEnvironment": true,
+    "workbench.colorTheme": "Sublime Text 4 Theme",
+    "editor.bracketPairColorization.independentColorPoolPerBracketType": true,
+    "workbench.activityBar.visible": true,
+    "workbench.preferredDarkColorTheme": "GitHub Dark Dimmed",
+    "workbench.preferredLightColorTheme": "GitHub Light Default",
+    "workbench.preferredHighContrastLightColorTheme": "Default Light+",
+    "workbench.fontAliasing": "antialiased",
+    "workbench.statusBar.visible": true,
 }
