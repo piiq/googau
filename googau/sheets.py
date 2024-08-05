@@ -23,14 +23,14 @@ class WorkSheet(object):
     # pylint: disable=invalid-name
     def __init__(self, **kwargs):
         """Construct a worksheet instance."""
-        self.sheetId = kwargs["sheetId"] if "sheetId" in kwargs else None
-        self.title = None
-        self.index = None
-        self.sheetType = None
-        self.gridProperties = None
-        self.hidden = None
-        self.tabColor = None
-        self.rightToLeft = False
+        self.sheetId = kwargs.get("sheetId", None)
+        self.title = kwargs.get("title", None)
+        self.index = kwargs.get("index", None)
+        self.sheetType = kwargs.get("sheetType", None)
+        self.gridProperties = kwargs.get("gridProperties", None)
+        self.hidden = kwargs.get("hidden", None)
+        self.tabColor = kwargs.get("tabColor", None)
+        self.rightToLeft = kwargs.get("rightToLeft", False)
 
     def remove_key(self, d, key):
         """Remove key from dictionary utility function."""
@@ -115,7 +115,7 @@ class WorkSheet(object):
                 "backgroundColor"
             ]["red"] = cf_style_dict[i]["red"]
             body["requests"].append(cfr)
-            result = sheet_session.batchUpdate(  # type: ignore
+            result = sheet_session.session.batchUpdate(  # type: ignore
                 spreadsheet_id=spreadsheet_id, body=body
             ).execute()
         return result
