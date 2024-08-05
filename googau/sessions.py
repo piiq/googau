@@ -14,6 +14,7 @@ SCOPES = [
     "https://www.googleapis.com/auth/documents",
     "https://www.googleapis.com/auth/drive",
     "https://www.googleapis.com/auth/calendar",
+    "https://www.googleapis.com/auth/gmail.readonly",
 ]
 
 
@@ -127,3 +128,15 @@ class CalendarSession(GoogleSession):
         self.creds = self.authenticate(**kwargs)
         # pylint: disable=no-member
         self.session = build("calendar", "v3", credentials=self.creds).events()
+
+
+class GmailSession(GoogleSession):
+    """GoogleSession for Gmail API."""
+
+    def __init__(self, **kwargs):
+        """Connect to Google Workspace Gmail API."""
+        self.creds = self.authenticate(**kwargs)
+        self.service = build("gmail", "v1", credentials=self.creds)
+
+    def messages(self):
+        return self.service.users().messages()

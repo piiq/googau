@@ -1,6 +1,7 @@
 """Test the sessions module."""
 
 import pytest
+from unittest.mock import patch
 
 # pylint: disable=import-outside-toplevel
 
@@ -14,6 +15,7 @@ import pytest
         "DriveSession",
         "FilesSession",
         "CalendarSession",
+        "GmailSession",
     ],
 )
 def test_import_session_module(session_class):
@@ -35,3 +37,13 @@ def test_scopes_start_with_url(url):
     assert (len(set(scopes_startswith)) == 1) and (  # nosec
         scopes_startswith[0] is True
     )
+
+
+@patch("googau.sessions.GmailSession.__init__", return_value=None)
+def test_gmail_session_init(mock_init):
+    """Test GmailSession initialization."""
+    from googau.sessions import GmailSession
+
+    session = GmailSession()
+    assert session is not None
+    mock_init.assert_called_once()
