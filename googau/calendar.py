@@ -1,4 +1,5 @@
 """Calendar utilities."""
+
 import datetime
 from typing import Optional
 from googau.sessions import CalendarSession
@@ -14,7 +15,7 @@ class TimeDeltas:
     YTD = datetime.timedelta(days=365)
 
 
-class CalendarObject:
+class Calendar(object):
     """Gets a Calendar object for the current session and an ID."""
 
     calendarId = None

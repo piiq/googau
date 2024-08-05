@@ -1,10 +1,11 @@
 """Spreadsheet utilities."""
+
 from typing import List, Optional, Any, Union
 from .sessions import SheetsSession
 from .constants.sheets_constants import CONDITIONAL_FORMATTING_RULE
 
 
-class WorkSheetObject:
+class WorkSheet(object):
     """Spreadsheet Worksheet object class.
 
     The worksheet is a page in the spreadsheet document. It contains the data.
@@ -120,7 +121,7 @@ class WorkSheetObject:
         return result
 
 
-class SpreadSheetObject(object):
+class SpreadSheet(object):
     """Gets a Spreadsheet object for the current session and an ID."""
 
     spreadsheet_id: Optional[str] = None
@@ -139,12 +140,12 @@ class SpreadSheetObject(object):
         self.spreadsheet_id = spreadsheet_id
         self.session = session
 
-    def new_worksheet(self, worksheet_object: WorkSheetObject):
+    def new_worksheet(self, worksheet: WorkSheet):
         """Add new worksheet to spreadsheet.
 
         Parameters
         ----------
-        worksheet_object : WorkSheetObject
+        worksheet : WorkSheet
             A dictionary object containing the worksheet properties
 
         Returns
@@ -152,7 +153,7 @@ class SpreadSheetObject(object):
         dict
             A dictionary object containing the worksheet properties
         """
-        body = {"requests": [{"addSheet": {"properties": worksheet_object.to_json()}}]}
+        body = {"requests": [{"addSheet": {"properties": worksheet.to_json()}}]}
         result = self.session.batchUpdate(  # type: ignore
             spreadsheet_id=self.spreadsheet_id, body=body
         ).execute()

@@ -6,7 +6,7 @@ from .sessions import DriveSession
 from .constants.drive_constants import SHARED_DRIVE
 
 
-class SharedDriveObject(object):
+class SharedDrive(object):
     """SharedDrive object for the current session and an ID."""
 
     drive_id: Optional[str] = None

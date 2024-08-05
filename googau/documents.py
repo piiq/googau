@@ -1,9 +1,10 @@
 """Document utilities."""
+
 from typing import Optional
 from .sessions import DocSession
 
 
-class DocObject:
+class Doc(object):
     """Gets a Document object for the current session and an ID."""
 
     documentId: Optional[str] = None
