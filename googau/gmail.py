@@ -100,9 +100,25 @@ class GmailEmail(object):
             raw_message=message,
         )
 
+    def to_json(self, exclude_raw: bool = False) -> dict:
+        """Convert the GmailEmail object to a JSON-serializable dictionary."""
+        message_dict = {
+            "date": self.date.isoformat(),
+            "sent_from": self.sent_from,
+            "sent_to": self.sent_to,
+            "cc": self.cc,
+            "subject": self.subject,
+            "text_content": self.text_content,
+            "raw_message": self._raw_message,
+        }
+        if exclude_raw:
+            message_dict.pop("raw_message", None)
+
+        return message_dict
+
     def __repr__(self) -> str:
         repr_string = "GmailEmail:\n"
-        repr_string += f"date={self.date}\n"
+        repr_string += f"date={self.date.isoformat()}\n"
         repr_string += f"sent_from={self.sent_from}\n"
         repr_string += f"sent_to={self.sent_to}\n"
         repr_string += f"cc={self.cc}\n"
