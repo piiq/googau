@@ -211,9 +211,9 @@ class GmailMailbox(object):
         after: Optional[str] = None,
         before: Optional[str] = None,
         limit: Optional[int] = None,
-        labelIds: Optional[List[str]] = None,
-        searchSpam: bool = False,
-        searchTrash: bool = False,
+        label_ids: Optional[List[str]] = None,
+        search_spam: bool = False,
+        search_trash: bool = False,
     ) -> List[Dict]:
         """Search for messages in the user's mailbox based on query and date range.
 
@@ -230,22 +230,22 @@ class GmailMailbox(object):
         limit : Optional[int], optional
             The maximum number of messages to return, by default None.
             Google defaults to 100 and maxes out at 500.
-        labelIds : Optional[List[str]], optional
+        label_ids : Optional[List[str]], optional
             The label IDs for the search, by default None
-        searchSpam : bool, optional
+        search_spam : bool, optional
             Whether to search the spam folder, by default False
-        searchTrash : bool, optional
+        search_trash : bool, optional
             Whether to search the trash folder, by default False
         """
         if after:
             query += f" after:{after}"
         if before:
             query += f" before:{before}"
-        if labelIds:
-            query += f" labelIds:{','.join(labelIds)}"
-        if searchSpam:
+        if label_ids:
+            query += f" labelIds:{','.join(label_ids)}"
+        if search_spam:
             query += " in:spam"
-        if searchTrash:
+        if search_trash:
             query += " in:trash"
 
         messages = []

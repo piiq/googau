@@ -13,10 +13,30 @@ def gmail_mailbox(mock_init):
     return mailbox
 
 
-def test_search_messages_mailbox(gmail_mailbox):
-    messages = gmail_mailbox.search_messages(
-        query="github", after="2024/07/01", before="2024/07/31"
-    )
+@pytest.mark.parametrize(
+    "kwargs",
+    [
+        {
+            "query": "github",
+            "after": "2024/07/01",
+            "before": "2024/07/31",
+        },
+        {
+            "query": "python",
+            "after": "2024/06/01",
+            "before": "2024/06/30",
+            "search_spam": True,
+        },
+        {
+            "query": "pytest",
+            "after": "2024/05/01",
+            "before": "2024/05/31",
+            "search_trash": True,
+        },
+    ],
+)
+def test_search_messages_mailbox(gmail_mailbox, kwargs):
+    messages = gmail_mailbox.search_messages(**kwargs)
     assert isinstance(messages, list)
 
 
