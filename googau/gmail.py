@@ -54,16 +54,27 @@ class GmailEmail(object):
 
     @classmethod
     def _get_text_content(cls, message: dict) -> Optional[str]:
-        text_content = ""
-        for part in message["payload"]["parts"]:
-            for header in part["headers"]:
-                if header["name"] == "Content-Type" and "text/plain" in header["value"]:
+        def extract_text(parts):
+            text_content = ""
+            for part in parts:
+                if part["mimeType"] == "text/plain":
                     encoded_string = part["body"]["data"]
                     decoded_string = base64.urlsafe_b64decode(encoded_string).decode(
                         "utf-8"
                     )
                     text_content += decoded_string
-        return text_content
+                elif part["mimeType"].startswith("multipart/"):
+                    text_content += extract_text(part.get("parts", []))
+            return text_content
+
+        payload = message.get("payload", {})
+        if payload.get("mimeType") == "multipart/mixed":
+            for part in payload.get("parts", []):
+                if part.get("mimeType") == "multipart/related":
+                    for subpart in part.get("parts", []):
+                        if subpart.get("mimeType") == "multipart/alternative":
+                            return extract_text(subpart.get("parts", []))
+        return extract_text(payload.get("parts", []))
 
     @classmethod
     def from_raw_message(cls, message: dict) -> "GmailEmail":
