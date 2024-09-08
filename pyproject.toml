@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "googau"
-version = "1.2.0"
+version = "1.2.1"
 description = "A helper library for automating your work with Google Workspace"
 authors = ["Theodore Aptekarev <aptekarev+googau@gmail.com>"]
 license = "MIT"
