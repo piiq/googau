@@ -36,6 +36,7 @@ class Calendar(object):
             The calendar session or None, by default None
         calendarId : Union[str, None], optional
             The calendar id from G-Suite or None, by default None
+
         """
         self.calendarId = calendarId
         self.service = session
@@ -58,6 +59,7 @@ class Calendar(object):
         -------
         list
             The list of events
+
         """
         if not date:
             _date = datetime.datetime.utcnow()

@@ -20,6 +20,7 @@ class Doc(object):
             The Google Docs API session to use, by default None
         documentId : Optional[str], optional
             The document id from Google Docs, by default None
+
         """
         self.documentId = documentId
         self.session = session

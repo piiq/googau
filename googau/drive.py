@@ -21,6 +21,7 @@ class SharedDrive(object):
             A DriveSession instance
         drive_id : Optional[str], optional
             The shared drive id from G-Suite, by default None
+
         """
         self.drive_id = drive_id
         self.session = session
@@ -48,6 +49,7 @@ class SharedDrive(object):
         -------
         dict
             The response from the API call.
+
         """
         drive_template = copy.deepcopy(SHARED_DRIVE)
         drive_template["name"] = name
@@ -67,6 +69,7 @@ class SharedDrive(object):
         -------
         dict
             The response from the API call.
+
         """
         if self.drive_id is None:
             return {"error": "No Drive ID provided."}
@@ -80,6 +83,7 @@ class SharedDrive(object):
         -------
         dict
             The response from the API call.
+
         """
         if self.drive_id is None:
             return {"error": "No Drive ID provided."}

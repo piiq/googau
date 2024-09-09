@@ -95,6 +95,7 @@ class WorkSheet(object):
         -------
         dict
             A dictionary object containing the conditional formatting style
+
         """
         cfr = CONDITIONAL_FORMATTING_RULE
         for i in cf_style_dict:
@@ -136,6 +137,7 @@ class SpreadSheet(object):
             A Google Sheets session object
         spreadsheet_id : Optional[str], optional
             The spreadsheet id from Google Sheets, by default None
+
         """
         self.spreadsheet_id = spreadsheet_id
         self.session = session
@@ -152,6 +154,7 @@ class SpreadSheet(object):
         -------
         dict
             A dictionary object containing the worksheet properties
+
         """
         body = {"requests": [{"addSheet": {"properties": worksheet.to_json()}}]}
         result = self.session.batchUpdate(  # type: ignore
@@ -168,6 +171,7 @@ class SpreadSheet(object):
         -------
         dict
             A dictionary object containing the available worksheets
+
         """
 
     def get_cell_range(self, cell_range: str) -> List[Union[str, int, float]]:
@@ -182,6 +186,7 @@ class SpreadSheet(object):
         -------
         List
             A list of strings or numbers containing the cell values
+
         """
         result = (
             self.session.session.values()
@@ -209,6 +214,7 @@ class SpreadSheet(object):
         -------
         dict
             A dictionary object containing the updated cell values
+
         """
         body = {"values": values}
         result = (

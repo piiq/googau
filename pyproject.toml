@@ -26,5 +26,8 @@ requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.ruff]
-select = ["B", "C4", "F", "E", "D"]
 line-length = 120
+
+[tool.ruff.lint]
+select = ["B", "C4", "F", "E", "D"]
+ignore = ["D203", "D213"]
