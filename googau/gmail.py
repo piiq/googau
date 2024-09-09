@@ -183,7 +183,10 @@ class GmailMailbox(object):
                 break
 
             # Split the list of messages that need to be retrieved into chunks of 100
-            chunks = [failed_ids[i : i + 100] for i in range(0, len(failed_ids), 100)]
+            chunks = [
+                failed_ids[i : i + 100]  # noqa: E203
+                for i in range(0, len(failed_ids), 100)
+            ]
 
             for chunk in chunks:
                 batch = self.session.service.new_batch_http_request(
