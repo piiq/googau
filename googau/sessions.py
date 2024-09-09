@@ -14,6 +14,7 @@ SCOPES = [
     "https://www.googleapis.com/auth/documents",
     "https://www.googleapis.com/auth/drive",
     "https://www.googleapis.com/auth/calendar",
+    "https://www.googleapis.com/auth/gmail.readonly",
 ]
 
 
@@ -30,11 +31,14 @@ class GoogleSession:
 
         Parameters
         ----------
-            token_path (str): Path to token.pickle file.
+        token_path : str
+            Path to token.pickle file.
 
         Returns
         -------
-            Optional[Credentials]: Credentials.
+        Optional[Credentials]
+            The authenticated credentials.
+
         """
         with open(token_path, "rb") as token:
             return pickle.load(token)  # nosec
@@ -46,12 +50,16 @@ class GoogleSession:
 
         Parameters
         ----------
-            credentials (str, optional): Path to credentials.json file.
-            token (str, optional): Path to token.pickle file.
+        credentials : Optional[str]
+            Path to credentials.json file.
+        token : Optional[str]
+            Path to token.pickle file.
 
         Returns
         -------
-            str: Credentials.
+        Credentials
+            The authenticated credentials.
+
         """
         creds = None
         if token is not None and os.path.exists(token):
@@ -127,3 +135,16 @@ class CalendarSession(GoogleSession):
         self.creds = self.authenticate(**kwargs)
         # pylint: disable=no-member
         self.session = build("calendar", "v3", credentials=self.creds).events()
+
+
+class GmailSession(GoogleSession):
+    """GoogleSession for Gmail API."""
+
+    def __init__(self, **kwargs):
+        """Connect to Google Workspace Gmail API."""
+        self.creds = self.authenticate(**kwargs)
+        self.service = build("gmail", "v1", credentials=self.creds)
+
+    def messages(self):
+        """Get the Gmail messages."""
+        return self.service.users().messages()

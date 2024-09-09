@@ -1,10 +1,11 @@
 """Spreadsheet utilities."""
+
 from typing import List, Optional, Any, Union
 from .sessions import SheetsSession
 from .constants.sheets_constants import CONDITIONAL_FORMATTING_RULE
 
 
-class WorkSheetObject:
+class WorkSheet(object):
     """Spreadsheet Worksheet object class.
 
     The worksheet is a page in the spreadsheet document. It contains the data.
@@ -22,14 +23,14 @@ class WorkSheetObject:
     # pylint: disable=invalid-name
     def __init__(self, **kwargs):
         """Construct a worksheet instance."""
-        self.sheetId = kwargs["sheetId"] if "sheetId" in kwargs else None
-        self.title = None
-        self.index = None
-        self.sheetType = None
-        self.gridProperties = None
-        self.hidden = None
-        self.tabColor = None
-        self.rightToLeft = False
+        self.sheetId = kwargs.get("sheetId", None)
+        self.title = kwargs.get("title", None)
+        self.index = kwargs.get("index", None)
+        self.sheetType = kwargs.get("sheetType", None)
+        self.gridProperties = kwargs.get("gridProperties", None)
+        self.hidden = kwargs.get("hidden", None)
+        self.tabColor = kwargs.get("tabColor", None)
+        self.rightToLeft = kwargs.get("rightToLeft", False)
 
     def remove_key(self, d, key):
         """Remove key from dictionary utility function."""
@@ -94,6 +95,7 @@ class WorkSheetObject:
         -------
         dict
             A dictionary object containing the conditional formatting style
+
         """
         cfr = CONDITIONAL_FORMATTING_RULE
         for i in cf_style_dict:
@@ -114,13 +116,13 @@ class WorkSheetObject:
                 "backgroundColor"
             ]["red"] = cf_style_dict[i]["red"]
             body["requests"].append(cfr)
-            result = sheet_session.batchUpdate(  # type: ignore
+            result = sheet_session.session.batchUpdate(  # type: ignore
                 spreadsheet_id=spreadsheet_id, body=body
             ).execute()
         return result
 
 
-class SpreadSheetObject(object):
+class SpreadSheet(object):
     """Gets a Spreadsheet object for the current session and an ID."""
 
     spreadsheet_id: Optional[str] = None
@@ -135,24 +137,26 @@ class SpreadSheetObject(object):
             A Google Sheets session object
         spreadsheet_id : Optional[str], optional
             The spreadsheet id from Google Sheets, by default None
+
         """
         self.spreadsheet_id = spreadsheet_id
         self.session = session
 
-    def new_worksheet(self, worksheet_object: WorkSheetObject):
+    def new_worksheet(self, worksheet: WorkSheet):
         """Add new worksheet to spreadsheet.
 
         Parameters
         ----------
-        worksheet_object : WorkSheetObject
+        worksheet : WorkSheet
             A dictionary object containing the worksheet properties
 
         Returns
         -------
         dict
             A dictionary object containing the worksheet properties
+
         """
-        body = {"requests": [{"addSheet": {"properties": worksheet_object.to_json()}}]}
+        body = {"requests": [{"addSheet": {"properties": worksheet.to_json()}}]}
         result = self.session.batchUpdate(  # type: ignore
             spreadsheet_id=self.spreadsheet_id, body=body
         ).execute()
@@ -167,6 +171,7 @@ class SpreadSheetObject(object):
         -------
         dict
             A dictionary object containing the available worksheets
+
         """
 
     def get_cell_range(self, cell_range: str) -> List[Union[str, int, float]]:
@@ -181,6 +186,7 @@ class SpreadSheetObject(object):
         -------
         List
             A list of strings or numbers containing the cell values
+
         """
         result = (
             self.session.session.values()
@@ -208,6 +214,7 @@ class SpreadSheetObject(object):
         -------
         dict
             A dictionary object containing the updated cell values
+
         """
         body = {"values": values}
         result = (

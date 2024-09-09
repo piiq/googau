@@ -1,4 +1,5 @@
 """Calendar utilities."""
+
 import datetime
 from typing import Optional
 from googau.sessions import CalendarSession
@@ -14,7 +15,7 @@ class TimeDeltas:
     YTD = datetime.timedelta(days=365)
 
 
-class CalendarObject:
+class Calendar(object):
     """Gets a Calendar object for the current session and an ID."""
 
     calendarId = None
@@ -35,6 +36,7 @@ class CalendarObject:
             The calendar session or None, by default None
         calendarId : Union[str, None], optional
             The calendar id from G-Suite or None, by default None
+
         """
         self.calendarId = calendarId
         self.service = session
@@ -57,6 +59,7 @@ class CalendarObject:
         -------
         list
             The list of events
+
         """
         if not date:
             _date = datetime.datetime.utcnow()

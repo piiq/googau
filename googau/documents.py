@@ -1,9 +1,10 @@
 """Document utilities."""
+
 from typing import Optional
 from .sessions import DocSession
 
 
-class DocObject:
+class Doc(object):
     """Gets a Document object for the current session and an ID."""
 
     documentId: Optional[str] = None
@@ -19,6 +20,7 @@ class DocObject:
             The Google Docs API session to use, by default None
         documentId : Optional[str], optional
             The document id from Google Docs, by default None
+
         """
         self.documentId = documentId
         self.session = session
