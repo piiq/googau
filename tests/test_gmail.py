@@ -9,7 +9,7 @@ def gmail_mailbox(mock_init):
     session = GmailSession()
     mailbox = GmailMailbox(session)
     mailbox.search_messages = MagicMock(return_value=[])
-    mailbox.get_messages = MagicMock(return_value={})
+    mailbox.get_messages = MagicMock(return_value=[])
     return mailbox
 
 
@@ -43,4 +43,10 @@ def test_search_messages_mailbox(gmail_mailbox, kwargs):
 def test_get_messages_mailbox(gmail_mailbox):
     message_ids = ["sample_message_id"]
     messages = gmail_mailbox.get_messages(msg_ids=message_ids)
-    assert isinstance(messages, dict)
+    assert isinstance(messages, list)
+
+
+def test_get_messages_mailbox_no_msg_ids(gmail_mailbox):
+    messages = gmail_mailbox.get_messages()
+    assert isinstance(messages, list)
+    assert len(messages) == 0

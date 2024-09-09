@@ -1,3 +1,5 @@
+"""Gmail API wrapper."""
+
 import base64
 import random
 import time
@@ -31,6 +33,7 @@ class GmailEmail(object):
     _raw_message: Optional[dict]
 
     def __init__(self, date: datetime, sent_from: str, sent_to: str, **kwargs) -> None:
+        """Initialize the GmailEmail object."""
         self.date = date
         self.sent_from = sent_from
         self.sent_to = sent_to
@@ -78,6 +81,7 @@ class GmailEmail(object):
 
     @classmethod
     def from_raw_message(cls, message: dict) -> "GmailEmail":
+        """Create a GmailEmail object from a raw message."""
         raw_date = cls._filter_header(message, "Date")
         sent_from = cls._filter_header(message, "From")
         sent_to = cls._filter_header(message, "To")
@@ -128,6 +132,7 @@ class GmailEmail(object):
         return message_dict
 
     def __repr__(self) -> str:
+        """Return a string representation of the GmailEmail object."""
         repr_string = "GmailEmail:\n"
         repr_string += f"date={self.date.isoformat()}\n"
         repr_string += f"sent_from={self.sent_from}\n"
@@ -142,6 +147,7 @@ class GmailMailbox(object):
     """GmailMailbox object for the current session."""
 
     def __init__(self, session: GmailSession):
+        """Initialize the GmailMailbox object."""
         self.session = session
 
     def get_message(self, user_id: str = "me", msg_id: str = "") -> Dict:
@@ -153,11 +159,14 @@ class GmailMailbox(object):
             The user ID for the search, by default "me" (the currently authenticated user)
         msg_id : str, optional
             The message ID to retrieve, by default ""
+
         """
         message = self.session.messages().get(userId=user_id, id=msg_id).execute()
         return message
 
-    def get_messages(self, user_id: str = "me", msg_ids: List[str] = []) -> List[Dict]:
+    def get_messages(
+        self, user_id: str = "me", msg_ids: Optional[List[str]] = None
+    ) -> List[Dict]:
         """Get a list of specific messages by their IDs using batch requests.
 
         Gmail API has a strict rate limit that allows retrieving about 50 emails per second.
@@ -172,7 +181,11 @@ class GmailMailbox(object):
             The user ID for the search, by default "me"
         msg_ids : List[str], optional
             The list of message IDs to retrieve, by default []
+
         """
+        if msg_ids is None:
+            return []
+
         messages = []
         failed_ids = msg_ids.copy()
         request_id_to_msg_id = {}
@@ -266,6 +279,7 @@ class GmailMailbox(object):
             Whether to search the spam folder, by default False
         search_trash : bool, optional
             Whether to search the trash folder, by default False
+
         """
         if after:
             query += f" after:{after}"

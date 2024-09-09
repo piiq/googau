@@ -24,3 +24,7 @@ ipykernel = "^6.29.5"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.ruff]
+select = ["B", "C4", "F", "E", "D"]
+line-length = 120
