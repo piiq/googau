@@ -23,10 +23,5 @@ jobs:
           key: ${{ runner.os }}-linting
           restore-keys: ${{ runner.os }}-linting
 
-      - run: pip install bandit black codespell flake8 pycodestyle pydocstyle
-      - run: bandit -r googau || true
-      - run: black --check googau
-      - run: codespell googau
-      - run: flake8 googau --count --max-line-length=120 --show-source --statistics
-      - run: pycodestyle googau --ignore=E501
-      - run: pydocstyle googau
+      - run: pip install ruff
+      - run: ruff check googau --config pyproject.toml

@@ -7,42 +7,31 @@
     "files.trimTrailingWhitespace": true,
     "files.trimFinalNewlines": true,
     "files.insertFinalNewline": true,
+    "files.exclude": {
+        "venv/": true,
+        ".mypy_cache/": true,
+        "**/node_modules/": true,
+        "**/__pycache__/": true,
+        "**/.mypy_cache/": true,
+        "**/.pytest_cache/": true,
+        "**/.ruff_cache/": true,
+        "**/.ipynb_checkpoints": true,
+        "**/.DS_Store": true,
+        "**/.scannerwork": true
+    },
     "[python]": {
+        "editor.defaultFormatter": "ms-python.black-formatter",
         "editor.tabSize": 4,
         "editor.insertSpaces": true,
-        "editor.formatOnSave": true
+        "editor.formatOnSave": true,
+        "editor.formatOnPaste": false,
+        "editor.codeActionsOnSave": {
+            "source.organizeImports": "never",
+            "source.fixAll": "explicit"
+        },
+        "editor.formatOnType": false,
     },
     "python.defaultInterpreterPath": "./venv/bin/python",
-    "python.formatting.provider": "black",
-    "python.linting.enabled": true,
-    "python.linting.flake8Path": "flake8",
-    "python.linting.flake8Enabled": true,
-    "python.linting.flake8CategorySeverity.F": "Error",
-    "python.linting.flake8CategorySeverity.E": "Error",
-    "python.linting.flake8Args": [
-        "--max-line-length=120"
-    ],
-    "python.linting.mypyEnabled": true,
-    "python.linting.mypyPath": "mypy",
-    "python.linting.pylintEnabled": true,
-    "python.linting.banditEnabled": true,
-    "python.linting.banditArgs": [
-        "-x",
-        "./tests",
-        "-r",
-    ],
-    "python.linting.pylintArgs": [
-        "--disable=C0301"
-    ],
-    "python.linting.pycodestyleEnabled": true,
-    "python.linting.pycodestyleArgs": [
-        "--ignore E501"
-    ],
-    "python.linting.pydocstylePath": "pydocstyle",
-    "python.linting.pydocstyleEnabled": false,
-    "python.linting.pydocstyleArgs": [
-        "--convention=numpy"
-    ],
     "python.languageServer": "Pylance",
     "python.testing.pytestArgs": [
         "tests"
@@ -50,9 +39,8 @@
     "python.testing.unittestEnabled": false,
     "python.testing.pytestEnabled": true,
     "python.terminal.activateEnvironment": true,
-    "workbench.colorTheme": "Sublime Text 4 Theme",
+    "workbench.colorTheme": "Default Dark Modern",
     "editor.bracketPairColorization.independentColorPoolPerBracketType": true,
-    "workbench.activityBar.visible": true,
     "workbench.preferredDarkColorTheme": "GitHub Dark Dimmed",
     "workbench.preferredLightColorTheme": "GitHub Light Default",
     "workbench.preferredHighContrastLightColorTheme": "Default Light+",
