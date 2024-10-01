@@ -50,7 +50,7 @@ class GmailEmail(object):
             (
                 header["value"]
                 for header in message["payload"]["headers"]
-                if header["name"] == header_name
+                if header["name"].lower() == header_name.lower()
             ),
             None,
         )
@@ -61,11 +61,15 @@ class GmailEmail(object):
             text_content = ""
             for part in parts:
                 if part["mimeType"] == "text/plain":
-                    encoded_string = part["body"]["data"]
-                    decoded_string = base64.urlsafe_b64decode(encoded_string).decode(
-                        "utf-8"
-                    )
-                    text_content += decoded_string
+                    if "data" in part["body"]:
+                        encoded_string = part["body"]["data"]
+                        decoded_string = base64.urlsafe_b64decode(
+                            encoded_string
+                        ).decode("utf-8")
+                        text_content += decoded_string
+                    elif "attachmentId" in part["body"]:
+                        # TODO: Implement attachment handling
+                        pass
                 elif part["mimeType"].startswith("multipart/"):
                     text_content += extract_text(part.get("parts", []))
             return text_content
@@ -101,7 +105,26 @@ class GmailEmail(object):
         if "(" in raw_date:
             raw_date = raw_date.split(" (")[0]
 
-        date = datetime.strptime(raw_date, "%a, %d %b %Y %H:%M:%S %z")
+        # Ensure the date string is correctly formatted
+        try:
+            date = datetime.strptime(raw_date, "%a, %d %b %Y %H:%M:%S %z")
+        except ValueError:
+            # Fallback to another "Received" header if the date parsing fails
+            received_headers = [
+                header["value"]
+                for header in message["payload"]["headers"]
+                if header["name"] == "Received"
+            ]
+            for received_header in received_headers:
+                try:
+                    raw_date = received_header.split(";")[-1].strip()
+                    date = datetime.strptime(raw_date, "%a, %d %b %Y %H:%M:%S %z")
+                    break
+                except ValueError:
+                    continue
+            else:
+                raise ValueError("No valid date found in message headers")
+
         # Convert the local datetime to UTC timezone (but keep it naive)
         utc_converted_datetime = date.replace(tzinfo=None)
 
