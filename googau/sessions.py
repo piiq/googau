@@ -14,7 +14,7 @@ SCOPES = [
     "https://www.googleapis.com/auth/documents",
     "https://www.googleapis.com/auth/drive",
     "https://www.googleapis.com/auth/calendar",
-    "https://www.googleapis.com/auth/gmail.readonly",
+    "https://mail.google.com/",  # This scope has the permissions to delete emails
 ]
 
 
@@ -45,7 +45,7 @@ class GoogleSession:
 
     def authenticate(
         self, credentials: Optional[str] = None, token: Optional[str] = None
-    ) -> Credentials:
+    ) -> Optional[Credentials]:
         """Authenticate user and return credentials.
 
         Parameters
@@ -57,8 +57,9 @@ class GoogleSession:
 
         Returns
         -------
-        Credentials
+        Optional[Credentials]
             The authenticated credentials.
+            Returns None if credentials are not found or are invalid.
 
         """
         creds = None
@@ -71,14 +72,22 @@ class GoogleSession:
 
         # If there are no (valid) credentials available, let the user log in.
         if not creds or not creds.valid:
+
+            def _dump_creds(creds: Credentials) -> None:
+                with open(
+                    os.path.join(os.getcwd(), "token.pickle"), "wb"
+                ) as token_file:
+                    pickle.dump(creds, token_file)
+
             if creds and creds.expired and creds.refresh_token:
                 creds.refresh(Request())
-            else:
+                _dump_creds(creds)
+            elif credentials is not None:
                 flow = InstalledAppFlow.from_client_secrets_file(credentials, SCOPES)
-                creds = flow.run_local_server(port=0)
-            # Save the credentials for the next run
-            with open(os.path.join(os.getcwd(), "token.pickle"), "wb") as token_file:
-                pickle.dump(creds, token_file)
+                new_creds: Credentials = flow.run_local_server(port=0)
+                _dump_creds(new_creds)
+            else:
+                raise ValueError("No credentials found")
         return creds
 
 
