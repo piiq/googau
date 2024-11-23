@@ -428,7 +428,7 @@ class GmailMailbox(object):
                 )
             )
 
-            # Correctly add each chunk to the batch request
+            # Add each chunk to the batch request
             request = self.session.messages().batchDelete(
                 userId=user_id, body={"ids": chunk}
             )
@@ -438,3 +438,9 @@ class GmailMailbox(object):
                 request_id_to_msg_id[request_id] = msg_id
 
             self._execute_batch_with_retries(batch)
+
+            # Google allows 250 quota credits per second
+            # Each batchDelete request is 50 quota credits
+            # We need to introduce a delay to comply with rate limits
+            # 0.2 seconds delay allows for 5 operations per second
+            time.sleep(0.2)
