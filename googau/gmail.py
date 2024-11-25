@@ -1,13 +1,15 @@
 """Gmail API wrapper."""
 
 import base64
+import logging
 import random
 import time
 import uuid
 from datetime import datetime
-from typing import Dict, List, Optional
+from typing import Callable, Dict, List, Optional
 
 from googleapiclient.errors import HttpError
+from googleapiclient.http import BatchHttpRequest
 
 from .sessions import GmailSession
 
@@ -23,8 +25,9 @@ class GmailEmail(object):
     """
 
     date: datetime
-    sent_from: str
-    sent_to: str
+    sent_from: Optional[str]
+    sent_to: Optional[str]
+    delivered_to: Optional[str]
     labels: Optional[list]
     cc: Optional[str]
     subject: Optional[str]
@@ -32,14 +35,16 @@ class GmailEmail(object):
 
     _raw_message: Optional[dict]
 
-    def __init__(self, date: datetime, sent_from: str, sent_to: str, **kwargs) -> None:
+    def __init__(
+        self, date: datetime, sent_from: Optional[str], sent_to: Optional[str], **kwargs
+    ) -> None:
         """Initialize the GmailEmail object."""
         self.date = date
         self.sent_from = sent_from
         self.sent_to = sent_to
-
+        self.delivered_to = kwargs.get("delivered_to", None)
         self.cc = kwargs.get("cc", None)
-        self.subject = kwargs.get("cc", None)
+        self.subject = kwargs.get("subject", None)
         self.text_content = kwargs.get("text_content", None)
 
         self._raw_message = kwargs.get("raw_message", None)
@@ -89,25 +94,28 @@ class GmailEmail(object):
         raw_date = cls._filter_header(message, "Date")
         sent_from = cls._filter_header(message, "From")
         sent_to = cls._filter_header(message, "To")
-        for h in [raw_date, sent_from, sent_to]:
-            if h is None:
-                raise ValueError(f"{h} header not found in message")
+        for h in [(raw_date, "Date"), (sent_from, "From"), (sent_to, "To")]:
+            if h[0] is None:
+                logging.error(f"{h[1]} header not found in message")
+                continue
 
         subject = cls._filter_header(message, "Subject")
         cc = cls._filter_header(message, "Cc")
+        delivered_to = cls._filter_header(message, "Delivered-To")
         text_content = cls._get_text_content(message)
 
         # Handle 'GMT' in date string
-        if "GMT" in raw_date:
+        if raw_date and "GMT" in raw_date:
             raw_date = raw_date.replace("GMT", "+0000")
 
         # Remove extra timezone information specified in parentheses
-        if "(" in raw_date:
+        if raw_date and "(" in raw_date:
             raw_date = raw_date.split(" (")[0]
 
         # Ensure the date string is correctly formatted
         try:
-            date = datetime.strptime(raw_date, "%a, %d %b %Y %H:%M:%S %z")
+            if raw_date:
+                date = datetime.strptime(raw_date, "%a, %d %b %Y %H:%M:%S %z")
         except ValueError:
             # Fallback to another "Received" header if the date parsing fails
             received_headers = [
@@ -118,8 +126,9 @@ class GmailEmail(object):
             for received_header in received_headers:
                 try:
                     raw_date = received_header.split(";")[-1].strip()
-                    date = datetime.strptime(raw_date, "%a, %d %b %Y %H:%M:%S %z")
-                    break
+                    if raw_date:
+                        date = datetime.strptime(raw_date, "%a, %d %b %Y %H:%M:%S %z")
+                        break
                 except ValueError:
                     continue
             else:
@@ -132,6 +141,7 @@ class GmailEmail(object):
             date=utc_converted_datetime,
             sent_from=sent_from,
             sent_to=sent_to,
+            delivered_to=delivered_to,
             cc=cc,
             subject=subject,
             text_content=text_content,
@@ -144,6 +154,7 @@ class GmailEmail(object):
             "date": self.date.isoformat(),
             "sent_from": self.sent_from,
             "sent_to": self.sent_to,
+            "delivered_to": self.delivered_to,
             "cc": self.cc,
             "subject": self.subject,
             "text_content": self.text_content,
@@ -160,6 +171,7 @@ class GmailEmail(object):
         repr_string += f"date={self.date.isoformat()}\n"
         repr_string += f"sent_from={self.sent_from}\n"
         repr_string += f"sent_to={self.sent_to}\n"
+        repr_string += f"delivered_to={self.delivered_to}\n"
         repr_string += f"cc={self.cc}\n"
         repr_string += f"subject={self.subject}\n"
         repr_string += f"text_content={self.text_content}\n"
@@ -173,102 +185,46 @@ class GmailMailbox(object):
         """Initialize the GmailMailbox object."""
         self.session = session
 
-    def get_message(self, user_id: str = "me", msg_id: str = "") -> Dict:
-        """Get a single specific message by ID.
-
-        Parameters
-        ----------
-        user_id : str, optional
-            The user ID for the search, by default "me" (the currently authenticated user)
-        msg_id : str, optional
-            The message ID to retrieve, by default ""
-
-        """
-        message = self.session.messages().get(userId=user_id, id=msg_id).execute()
-        return message
-
-    def get_messages(
-        self, user_id: str = "me", msg_ids: Optional[List[str]] = None
-    ) -> List[Dict]:
-        """Get a list of specific messages by their IDs using batch requests.
-
-        Gmail API has a strict rate limit that allows retrieving about 50 emails per second.
-        Given that search of a mailbox will likely return more than 50 emails, we need to
-        make multiple batch requests to retrieve all the emails.
-
-        The maximum number of requests in a batch request shall not exceed 100.
-
-        Parameters
-        ----------
-        user_id : str, optional
-            The user ID for the search, by default "me"
-        msg_ids : List[str], optional
-            The list of message IDs to retrieve, by default []
-
-        """
-        if msg_ids is None:
-            return []
-
-        messages = []
-        failed_ids = msg_ids.copy()
-        request_id_to_msg_id = {}
-        max_retries = 5
-
-        for attempt in range(max_retries):
-            if not failed_ids:
-                break
-
-            # Split the list of messages that need to be retrieved into chunks of 100
-            chunks = [
-                failed_ids[i : i + 100]  # noqa: E203
-                for i in range(0, len(failed_ids), 100)
-            ]
-
-            for chunk in chunks:
-                batch = self.session.service.new_batch_http_request(
-                    callback=self._batch_callback(
-                        messages, request_id_to_msg_id, failed_ids
-                    )
-                )
-
-                for msg_id in chunk:
-                    request = self.session.messages().get(userId=user_id, id=msg_id)
-                    request_id = str(uuid.uuid4())
-                    batch.add(request, request_id=request_id)
-                    request_id_to_msg_id[request_id] = msg_id
-
-                self._execute_batch_with_retries(batch)
-
-            if not failed_ids:
-                break
-
-            wait_time = (2**attempt) + (random.randint(0, 1000) / 1000)
-            time.sleep(wait_time)
-
-        return messages
-
-    def _batch_callback(self, messages, request_id_to_msg_id, failed_ids):
+    def _batch_callback(
+        self,
+        success_handler: Callable[[Dict, str], None],
+        request_id_to_msg_id: Dict[str, str],
+        failed_ids: List[str],
+    ) -> Callable[[str, Dict, Optional[HttpError]], None]:
         def callback(request_id, response, exception):
             msg_id = request_id_to_msg_id.get(request_id)
             if msg_id:
                 if exception is None:
-                    messages.append(response)
+                    success_handler(response, msg_id)
                     failed_ids.remove(msg_id)
 
         return callback
 
-    def _execute_batch_with_retries(self, batch, max_retries=5):
+    def _execute_batch_with_retries(
+        self, batch: BatchHttpRequest, max_retries: int = 10
+    ) -> None:
         """Execute the batch request with retries on rate limit errors."""
         for attempt in range(max_retries):
             try:
                 batch.execute()
                 break
             except HttpError as error:
-                if error.resp.status == 429:
+                if error.resp.status in [
+                    429,
+                    500,
+                    503,
+                ]:  # Handle rate limit and server errors
                     wait_time = (2**attempt) + (random.randint(0, 1000) / 1000)
+                    logging.warning(
+                        f"Retrying batch request due to error: {error}. Attempt {attempt + 1}"
+                    )
                     time.sleep(wait_time)
                 else:
+                    logging.error(f"Batch request failed with HttpError: {error}")
                     raise
+            except Exception as e:
+                logging.error(f"Batch request failed with Exception: {e}")
+                raise
 
     def search_messages(
         self,
@@ -319,27 +275,172 @@ class GmailMailbox(object):
         page_token = None
         fetched_count = 0
         max_per_request = 500  # Gmail API max limit per request
+        max_retries = 5
+        attempt = 0
 
         while True:
-            current_limit = (
-                min(max_per_request, limit - fetched_count)
-                if limit
-                else max_per_request
-            )
-            response = (
-                self.session.messages()
-                .list(
-                    userId=user_id,
-                    q=query,
-                    maxResults=current_limit,
-                    pageToken=page_token,
+            try:
+                current_limit = (
+                    min(max_per_request, limit - fetched_count)
+                    if limit
+                    else max_per_request
                 )
-                .execute()
-            )
-            messages.extend(response.get("messages", []))
-            fetched_count += len(response.get("messages", []))
-            page_token = response.get("nextPageToken")
-            if not page_token or (limit and fetched_count >= limit):
-                break
+                response = (
+                    self.session.messages()
+                    .list(
+                        userId=user_id,
+                        q=query,
+                        maxResults=current_limit,
+                        pageToken=page_token,
+                    )
+                    .execute()
+                )
+                if isinstance(response, str):
+                    import json
+
+                    print(response)
+                    response = json.loads(response)
+                messages.extend(response.get("messages", []))
+                fetched_count += len(response.get("messages", []))
+                page_token = response.get("nextPageToken")
+                if not page_token or (limit and fetched_count >= limit):
+                    break
+            except HttpError as error:
+                if error.resp.status == 403 and "rateLimitExceeded" in str(error):
+                    if attempt < max_retries:
+                        wait_time = (2**attempt) + (random.randint(0, 1000) / 1000)
+                        time.sleep(wait_time)
+                        attempt += 1
+                        continue
+                    else:
+                        raise
+                else:
+                    raise
 
         return messages[:limit] if limit else messages
+
+    def get_message(self, user_id: str = "me", msg_id: str = "") -> Dict:
+        """Get a single specific message by ID.
+
+        Parameters
+        ----------
+        user_id : str, optional
+            The user ID for the search, by default "me" (the currently authenticated user)
+        msg_id : str, optional
+            The message ID to retrieve, by default ""
+
+        """
+        message = self.session.messages().get(userId=user_id, id=msg_id).execute()
+        return message
+
+    def get_messages(
+        self, user_id: str = "me", msg_ids: Optional[List[str]] = None
+    ) -> List[Dict]:
+        """Get a list of specific messages by their IDs using batch requests.
+
+        Gmail API has a strict rate limit that allows retrieving about 50 emails per second.
+        Given that search of a mailbox will likely return more than 50 emails, we need to
+        make multiple batch requests to retrieve all the emails.
+
+        The maximum number of requests in a batch request shall not exceed 100.
+
+        Parameters
+        ----------
+        user_id : str, optional
+            The user ID for the search, by default "me"
+        msg_ids : List[str], optional
+            The list of message IDs to retrieve, by default []
+
+        """
+        if msg_ids is None:
+            return []
+
+        messages = []
+        failed_ids = msg_ids.copy()
+        request_id_to_msg_id: Dict = {}
+        max_retries = 5
+
+        for attempt in range(max_retries):
+            if not failed_ids:
+                break
+
+            # Split the list of messages that need to be retrieved into chunks of 100
+            chunks = [
+                failed_ids[i : i + 100]  # noqa: E203
+                for i in range(0, len(failed_ids), 100)
+            ]
+
+            for chunk in chunks:
+                batch = self.session.service.new_batch_http_request(
+                    callback=self._batch_callback(
+                        lambda response, msg_id: messages.append(response),
+                        request_id_to_msg_id,
+                        failed_ids,
+                    )
+                )
+
+                for msg_id in chunk:
+                    request = self.session.messages().get(userId=user_id, id=msg_id)
+                    request_id = str(uuid.uuid4())
+                    batch.add(request, request_id=request_id)
+                    request_id_to_msg_id[request_id] = msg_id
+
+                self._execute_batch_with_retries(batch)
+
+            if not failed_ids:
+                break
+
+            wait_time = (2**attempt) + (random.randint(0, 1000) / 1000)
+            time.sleep(wait_time)
+
+        return messages
+
+    def delete_messages(
+        self, user_id: str = "me", msg_ids: Optional[List[str]] = None
+    ) -> None:
+        """Delete a list of messages by their IDs using batch requests.
+
+        Parameters
+        ----------
+        user_id : str, optional
+            The user ID for the operation, by default "me"
+        msg_ids : List[str], optional
+            The list of message IDs to delete, by default None
+
+        """
+        if msg_ids is None:
+            return
+
+        failed_ids = msg_ids.copy()
+        request_id_to_msg_id: Dict = {}
+
+        # Split the list of messages that need to be deleted into chunks of 50
+        chunks = [
+            failed_ids[i : i + 50] for i in range(0, len(failed_ids), 50)  # noqa: E203
+        ]
+
+        for chunk in chunks:
+            batch = self.session.service.new_batch_http_request(
+                callback=self._batch_callback(
+                    lambda response, msg_id: None,  # No action needed on success
+                    request_id_to_msg_id,
+                    failed_ids,
+                )
+            )
+
+            # Add each chunk to the batch request
+            request = self.session.messages().batchDelete(
+                userId=user_id, body={"ids": chunk}
+            )
+            request_id = str(uuid.uuid4())
+            batch.add(request, request_id=request_id)
+            for msg_id in chunk:
+                request_id_to_msg_id[request_id] = msg_id
+
+            self._execute_batch_with_retries(batch)
+
+            # Google allows 250 quota credits per second
+            # Each batchDelete request is 50 quota credits
+            # We need to introduce a delay to comply with rate limits
+            # 0.2 seconds delay allows for 5 operations per second
+            time.sleep(0.2)
