@@ -3,6 +3,7 @@
         "creds",
         "Googau",
         "googleapiclient",
+        "httplib",
         "pypi",
         "venv",
         "virtualenv"

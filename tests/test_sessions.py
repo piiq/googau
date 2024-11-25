@@ -33,13 +33,15 @@ def test_import_session_module(session_class):
     assert hasattr(session, session_class)  # nosec
 
 
-@pytest.mark.parametrize("url", ["https://www.googleapis.com/auth/"])
-def test_scopes_start_with_url(url):
-    """Test that all scopes start with a pre-defined url."""
+def test_scopes_start_with_url():
+    """Test that all scopes start with one of the pre-defined urls."""
     import googau.sessions as session
 
-    scopes_startswith = [scope.startswith(url) for scope in session.SCOPES]
-    assert (len(set(scopes_startswith)) == 1) and (scopes_startswith[0] is True)
+    valid_urls = ["https://www.googleapis.com/auth/", "https://mail.google.com/"]
+    scopes_startswith = [
+        any(scope.startswith(url) for url in valid_urls) for scope in session.SCOPES
+    ]
+    assert all(scopes_startswith)
 
 
 @patch("googau.sessions.GmailSession.__init__", return_value=None)
